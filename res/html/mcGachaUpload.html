@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>库洛插件 - 鸣潮抽卡上传</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 90vh;
+            flex-direction: column;
+            margin-top: 60px;
+            /* 为顶栏留出空间 */
+        }
+
+        /* 通用样式 */
+        .select-input-button {
+            margin: 8px;
+            width: 260px;
+            height: 50px;
+            border-radius: 15px;
+            /* 圆角10px */
+            padding: 5px;
+            /* 内边距 */
+            padding-left: 10px;
+            /* 左右内边距10px */
+            padding-right: 10px;
+            border: 1px solid #ccc;
+            /* 统一边框样式 */
+            box-sizing: border-box;
+            /* 使宽度包括边框和内边距 */
+            font-size: 20px;
+        }
+
+        #checkTip {
+            font-size: 32px;
+        }
+
+        button#uploadButton {
+            background-color: #39c5bb;
+            color: white;
+            cursor: pointer;
+        }
+
+        button#uploadButton:disabled {
+            background-color: #ccc;
+            color: #666;
+            cursor: not-allowed;
+        }
+
+        #msg {
+            margin-top: 20px;
+        }
+
+        #topBar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 40px;
+            background-color: #f8f8f8;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .action-content {
+            display: none;
+        }
+
+        .vertical-align-middle {
+            vertical-align: middle;
+        }
+
+        /* 添加深色模式样式 */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #121212;
+                color: #e0e0e0;
+            }
+
+            #topBar {
+                background-color: #333;
+                box-shadow: 0 2px 5px rgba(255, 255, 255, 0.1);
+            }
+
+            .select-input-button {
+                background-color: #222;
+                color: #fff;
+                border: 1px solid #444;
+            }
+
+            button#uploadButton:disabled {
+                background-color: #444;
+                color: #aaa;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="topBar">
+        <div>
+            <span id="appName" class="vertical-align-middle">库洛插件 - 鸣潮抽卡上传</span>
+        </div>
+    </div>
+
+    <div id="checkTip">
+        <div id="checkMsg">加载中...</div>
+    </div>
+
+        <h2 class="action-content">库洛插件 - 鸣潮抽卡上传</h2>
+        <br><br>
+        <select id="gameServerList" class="select-input-button action-content">
+            <option value="76402e5b20be2c39f095a152090afddc">国服</option>
+        </select>
+        <input id="uidInput" class="select-input-button action-content" type="number" placeholder="输入 UID" required>
+        <br>
+        <button id="uploadButton" class="select-input-button action-content" disabled>上传</button>
+        <div id="msg" class="action-content"></div>
+
+    
+
+    <script>
+        var checkTip = document.getElementById('checkTip');
+        var checkMsg = document.getElementById('checkMsg');
+        var actionContents = document.getElementsByClassName('action-content');
+        var gameServerList = document.getElementById('gameServerList');
+        var uidInput = document.getElementById('uidInput');
+        var uploadButton = document.getElementById('uploadButton');
+        var msgDiv = document.getElementById('msg');
+        function validateUid(uid) {
+            // 检查是否为九位数, 非0开头的数字
+            return /^\d{9}$/.test(uid) && !/^0\d{8}$/.test(uid);
+        }
+
+        function post(url, data) {
+            return fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: data
+            }).then(response => response.json());
+        }
+
+        // 读取localStorage中的索引值
+        var gameServerListIndex = localStorage.getItem('gameServerListIndex');
+        if (gameServerListIndex) {
+            gameServerList.selectedIndex = gameServerListIndex;
+        }
+        var uid = localStorage.getItem('kuroPluginGameUid');
+        if (uid) {
+            uidInput.value = uid;
+            uploadButton.disabled = !validateUid(uid);
+        }
+
+        // 给下拉框选择器添加事件监听
+        gameServerList.addEventListener('change', function () {
+            // 索引值存到localStorage
+            localStorage.setItem('kuroPluginGameServerListIndex', this.selectedIndex);
+            uploadButton.innerText = '上传';
+            msgDiv.innerText = '';
+        });
+
+        uidInput.addEventListener('input', function () {
+            localStorage.setItem('kuroPluginGameUid', this.value);
+            uploadButton.innerText = '上传';
+            uploadButton.disabled = !validateUid(this.value);
+            msgDiv.innerText = '';
+        });
+
+        uploadButton.addEventListener('click', function () {
+            uploadButton.disabled = true;
+            uploadButton.innerText = '处理中...';
+            msgDiv.innerText = '';
+            var uid = uidInput.value;
+            var server = gameServerList.value;
+            var token = new URLSearchParams(window.location.search).get('token');
+            // 从库洛 API 获取 抽卡记录
+            console.log('开始获取抽卡记录, uid:', uid, 'server:', server);
+            var gachaData = {};
+            var apiUrl = 'https://gmserver-api.aki-game2.com/gacha/record/query';
+            //TODO: 貌似库洛加了鉴权, 开始验证 recordId 了, 我这一天好像白写了
+            // 获取卡池 1-6 的数据
+            // for (var i = 1; i <= 6; i++) {
+            //     post(apiUrl, JSON.stringify({ uid, server, gachaType: i, page: 1, pageSize: 20 }))
+            //         .then(response => {
+            //             if (response.code != 0) {
+            //                 uploadButton.innerText = '上传';
+            //                 uploadButton.disabled = false;
+            //                 msgDiv.innerText = '获取抽卡记录失败: ' + response.msg;
+            //                 return;
+            //             }
+            //             gachaData[i] = response.data;
+            //             if (Object.keys(gachaData).length == 6) {
+            //                 uploadGachaData(gachaData);
+            //             }
+            //         });
+            // }
+
+            // 上传抽卡记录
+            post('/api/mc/gacha/upload', JSON.stringify({ version: 1, token, playerId: uid, gachaData}))
+                .then(response => {
+                    if (response.code != 0) {
+                        uploadButton.innerText = '上传';
+                        uploadButton.disabled = false;
+                        msgDiv.innerText = '上传失败: ' + response.msg;
+                    } else {
+                        uploadButton.disabled = true;
+                        uploadButton.innerText = '上传成功';
+                        msgDiv.innerText = '上传完成, 稍等几秒 Bot 会自动抽卡记录';
+
+                    }
+                });
+        });
+
+        // 绑定按键事件
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter') {
+                uploadButton.click();
+            }
+        });
+
+        // 开始检查参数
+        checkParams();
+
+        function checkParams() {
+            // 检查服务器是否正常
+            post('/api/ping')
+                .then(response => {
+                    if (response.code != 0) {
+                        checkMsg.innerText = '服务器异常: ' + response.msg;
+                        return
+                    }
+                });
+            
+            var urlParams = new URLSearchParams(window.location.search);
+            var token = urlParams.get('token');
+            if (!token) {
+                checkMsg.innerText = '缺少 token, 请获取后再试';
+                return;
+            }
+            if (!/^[0-9a-zA-Z]{16}$/.test(token)) {
+                checkMsg.innerText = 'token 格式错误, 请重新获取';
+                return;
+            }
+            // 使用 api /api/mc/gacha/verifyToken 验证 token
+            post('/api/mc/gacha/verifyToken', JSON.stringify({ token, version: 1 }))
+                .then(response => {
+                    if (response.code != 0) {
+                        checkMsg.innerText = response.msg;
+                        return;
+                    } else { // 所有检查通过, 显示内容
+                        checkMsg.innerText = '';
+                        // 隐藏 checkTip
+                        checkTip.style.display = 'none';
+                        // 显示所有 actionContents
+                        for (var i = 0; i < actionContents.length; i++) {
+                            actionContents[i].style.display = 'block';
+                        }
+                    }
+                });
+            
+
+        }
+    </script>
+
+</body>
+
+</html>
