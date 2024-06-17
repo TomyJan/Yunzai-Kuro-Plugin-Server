@@ -313,7 +313,7 @@
             if (authButton.innerText === '复制 Token') {
                 // 复制 Token
                 msgDiv.innerText = '';
-                navigator.clipboard.writeText(kuroToken).then(function() {
+                navigator.clipboard.writeText(JSON.stringify(kuroToken)).then(function() {
                     authButton.innerText = '已复制';
                     authButton.disabled = true;
                     msgDiv.innerText = 'Token 已复制到剪贴板, 可用于登录其它自动化程序, 注意妥善保管';
