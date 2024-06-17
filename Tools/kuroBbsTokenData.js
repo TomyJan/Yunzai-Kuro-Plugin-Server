@@ -45,7 +45,13 @@ class kuroBbsTokenDataManager {
    * @returns {boolean} token 是否存在
    */
   verifyToken(token) {
-    if (!token || typeof token !== 'string' || token.length !== 16 || !/^[0-9a-fA-F]+$/.test(token) ) return false
+    if (
+      !token ||
+      typeof token !== 'string' ||
+      token.length !== 16 ||
+      !/^[0-9a-fA-F]+$/.test(token)
+    )
+      return false
     let tokenPath = this.dataPath + token + '.json'
     return fs.existsSync(tokenPath)
   }
@@ -62,18 +68,23 @@ class kuroBbsTokenDataManager {
       let rawTokenData = fs.readFileSync(tokenPath, 'utf-8')
       // 删除文件
       if (Object.keys(JSON.parse(rawTokenData)).length > 0) {
-        logger.info('删除 token', token, '已上传的库街区 token:', JSON.stringify(JSON.parse(rawTokenData)))
+        logger.info(
+          '删除 token',
+          token,
+          '已上传的库街区 token:',
+          JSON.stringify(JSON.parse(rawTokenData))
+        )
         fs.unlinkSync(tokenPath)
       }
       return JSON.parse(rawTokenData)
-      } catch (err) {
-        logger.error('无法读取 token', token, '的库街区 token:', err)
-        return null
-      }
+    } catch (err) {
+      logger.error('无法读取 token', token, '的库街区 token:', err)
+      return null
+    }
   }
 
   /**
-   * 保存库街区 token 
+   * 保存库街区 token
    * @param {string} token token
    * @param {object} data 原始格式的库街区 token
    * @returns {null|string} 保存成功返回 null 失败返回错误信息
@@ -88,7 +99,7 @@ class kuroBbsTokenDataManager {
       return `读取本地库街区 Token 失败: ${err}, 请重试`
     }
     if (Object.keys(localData).length !== 0) {
-      logger.error( token, '的本地库街区 token 不为空，无法保存')
+      logger.error(token, '的本地库街区 token 不为空，无法保存')
       return '已经上传过库街区 Token 了, 如需重新上传请重新获取 Token'
     }
     try {

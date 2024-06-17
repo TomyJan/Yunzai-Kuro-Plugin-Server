@@ -45,7 +45,13 @@ class mcGachaDataManager {
    * @returns {boolean} token 是否存在
    */
   verifyToken(token) {
-    if (!token || typeof token !== 'string' || token.length !== 16 || !/^[0-9a-fA-F]+$/.test(token) ) return false
+    if (
+      !token ||
+      typeof token !== 'string' ||
+      token.length !== 16 ||
+      !/^[0-9a-fA-F]+$/.test(token)
+    )
+      return false
     let tokenPath = this.dataPath + token + '.json'
     return fs.existsSync(tokenPath)
   }
@@ -62,14 +68,19 @@ class mcGachaDataManager {
       let rawGachaData = fs.readFileSync(tokenPath, 'utf-8')
       // 删除文件
       if (Object.keys(JSON.parse(rawGachaData)).length > 0) {
-        logger.info('删除 token', token, '已上传的抽卡记录:', JSON.stringify(JSON.parse(rawGachaData)))
+        logger.info(
+          '删除 token',
+          token,
+          '已上传的抽卡记录:',
+          JSON.stringify(JSON.parse(rawGachaData))
+        )
         fs.unlinkSync(tokenPath)
       }
       return JSON.parse(rawGachaData)
-      } catch (err) {
-        logger.error('无法读取 token', token, '的抽卡记录:', err)
-        return null
-      }
+    } catch (err) {
+      logger.error('无法读取 token', token, '的抽卡记录:', err)
+      return null
+    }
   }
 
   /**
@@ -88,7 +99,7 @@ class mcGachaDataManager {
       return `读取本地抽卡记录失败: ${err}, 请重试`
     }
     if (Object.keys(localData).length !== 0) {
-      logger.error( token, '的本地抽卡记录不为空，无法保存')
+      logger.error(token, '的本地抽卡记录不为空，无法保存')
       return '已经上传过抽卡记录了, 如需重新上传请重新获取 token'
     }
     try {

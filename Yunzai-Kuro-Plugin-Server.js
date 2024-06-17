@@ -130,7 +130,6 @@ let server = http
       return
     }
 
-    
     // API: Bot: 生成库街区登录的密钥
     if (url === '/api/kuroBbs/token/generateToken') {
       let requestBody = ''
@@ -170,7 +169,14 @@ let server = http
             'content-type': 'application/json;charset="utf-8"',
           })
           res.end(JSON.stringify(generateTokenRsp))
-          logger.warn('客户端', clientIp, '请求', url, '不支持的版本号', params?.version)
+          logger.warn(
+            '客户端',
+            clientIp,
+            '请求',
+            url,
+            '不支持的版本号',
+            params?.version
+          )
           return
         }
         let token = kuroBbsTokenData.generateToken()
@@ -233,7 +239,14 @@ let server = http
             'content-type': 'application/json;charset="utf-8"',
           })
           res.end(JSON.stringify(verifyTokenRsp))
-          logger.warn('客户端', clientIp, '请求', url, '不支持的版本号', params?.version)
+          logger.warn(
+            '客户端',
+            clientIp,
+            '请求',
+            url,
+            '不支持的版本号',
+            params?.version
+          )
           return
         }
         if (!params.token || !kuroBbsTokenData.verifyToken(params?.token)) {
@@ -242,7 +255,14 @@ let server = http
             'content-type': 'application/json;charset="utf-8"',
           })
           res.end(JSON.stringify(verifyTokenRsp))
-          logger.warn('客户端', clientIp, '请求', url, '无效的 token:', params.token)
+          logger.warn(
+            '客户端',
+            clientIp,
+            '请求',
+            url,
+            '无效的 token:',
+            params.token
+          )
           return
         }
         verifyTokenRsp.code = 0
@@ -294,7 +314,14 @@ let server = http
             'content-type': 'application/json;charset="utf-8"',
           })
           res.end(JSON.stringify(kuroBbsTokenDataUploadRsp))
-          logger.warn('客户端', clientIp, '请求', url, '不支持的版本号', params?.version)
+          logger.warn(
+            '客户端',
+            clientIp,
+            '请求',
+            url,
+            '不支持的版本号',
+            params?.version
+          )
           return
         }
         if (!params.token || !kuroBbsTokenData.verifyToken(params?.token)) {
@@ -303,7 +330,14 @@ let server = http
             'content-type': 'application/json;charset="utf-8"',
           })
           res.end(JSON.stringify(kuroBbsTokenDataUploadRsp))
-          logger.warn('客户端', clientIp, '请求', url, '无效的 token:', params.token)
+          logger.warn(
+            '客户端',
+            clientIp,
+            '请求',
+            url,
+            '无效的 token:',
+            params.token
+          )
           return
         }
         if (!params.kuroToken || Object.keys(params.kuroToken).length !== 4) {
@@ -312,10 +346,20 @@ let server = http
             'content-type': 'application/json;charset="utf-8"',
           })
           res.end(JSON.stringify(kuroBbsTokenDataUploadRsp))
-          logger.warn('客户端', clientIp, '请求', url, '不完整的 库洛  token:', JSON.stringify(params.kuroToken))
+          logger.warn(
+            '客户端',
+            clientIp,
+            '请求',
+            url,
+            '不完整的 库洛  token:',
+            JSON.stringify(params.kuroToken)
+          )
           return
         }
-        let saveRet = kuroBbsTokenData.saveTokenData(params.token, params.kuroToken)
+        let saveRet = kuroBbsTokenData.saveTokenData(
+          params.token,
+          params.kuroToken
+        )
         if (saveRet !== null) {
           kuroBbsTokenDataUploadRsp.msg = `保存库街区 Token 失败: ${saveRet}`
           res.writeHead(200, {
@@ -375,7 +419,14 @@ let server = http
             'content-type': 'application/json;charset="utf-8"',
           })
           res.end(JSON.stringify(kuroBbsTokenDataGetRsp))
-          logger.warn('客户端', clientIp, '请求', url, '不支持的版本号', params?.version)
+          logger.warn(
+            '客户端',
+            clientIp,
+            '请求',
+            url,
+            '不支持的版本号',
+            params?.version
+          )
           return
         }
         if (!params.token || !kuroBbsTokenData.verifyToken(params?.token)) {
@@ -384,7 +435,14 @@ let server = http
             'content-type': 'application/json;charset="utf-8"',
           })
           res.end(JSON.stringify(kuroBbsTokenDataGetRsp))
-          logger.warn('客户端', clientIp, '请求', url, '无效的 token:', params.token)
+          logger.warn(
+            '客户端',
+            clientIp,
+            '请求',
+            url,
+            '无效的 token:',
+            params.token
+          )
           return
         }
         let data = kuroBbsTokenData.getTokenData(params?.token)
@@ -448,7 +506,14 @@ let server = http
             'content-type': 'application/json;charset="utf-8"',
           })
           res.end(JSON.stringify(generateTokenRsp))
-          logger.warn('客户端', clientIp, '请求', url, '不支持的版本号', params?.version)
+          logger.warn(
+            '客户端',
+            clientIp,
+            '请求',
+            url,
+            '不支持的版本号',
+            params?.version
+          )
           return
         }
         let token = mcGachaData.generateToken()
@@ -511,7 +576,14 @@ let server = http
             'content-type': 'application/json;charset="utf-8"',
           })
           res.end(JSON.stringify(verifyTokenRsp))
-          logger.warn('客户端', clientIp, '请求', url, '不支持的版本号', params?.version)
+          logger.warn(
+            '客户端',
+            clientIp,
+            '请求',
+            url,
+            '不支持的版本号',
+            params?.version
+          )
           return
         }
         if (!params.token || !mcGachaData.verifyToken(params?.token)) {
@@ -520,7 +592,14 @@ let server = http
             'content-type': 'application/json;charset="utf-8"',
           })
           res.end(JSON.stringify(verifyTokenRsp))
-          logger.warn('客户端', clientIp, '请求', url, '无效的 token:', params.token)
+          logger.warn(
+            '客户端',
+            clientIp,
+            '请求',
+            url,
+            '无效的 token:',
+            params.token
+          )
           return
         }
         verifyTokenRsp.code = 0
@@ -572,7 +651,14 @@ let server = http
             'content-type': 'application/json;charset="utf-8"',
           })
           res.end(JSON.stringify(mcGachaDataUploadRsp))
-          logger.warn('客户端', clientIp, '请求', url, '不支持的版本号', params?.version)
+          logger.warn(
+            '客户端',
+            clientIp,
+            '请求',
+            url,
+            '不支持的版本号',
+            params?.version
+          )
           return
         }
         if (!params.token || !mcGachaData.verifyToken(params?.token)) {
@@ -581,7 +667,14 @@ let server = http
             'content-type': 'application/json;charset="utf-8"',
           })
           res.end(JSON.stringify(mcGachaDataUploadRsp))
-          logger.warn('客户端', clientIp, '请求', url, '无效的 token:', params.token)
+          logger.warn(
+            '客户端',
+            clientIp,
+            '请求',
+            url,
+            '无效的 token:',
+            params.token
+          )
           return
         }
         if (!params.playerId || !/^\d{9}$/.test(params.playerId)) {
@@ -590,7 +683,14 @@ let server = http
             'content-type': 'application/json;charset="utf-8"',
           })
           res.end(JSON.stringify(mcGachaDataUploadRsp))
-          logger.warn('客户端', clientIp, '请求', url, '无效的 playerId:', params.playerId)
+          logger.warn(
+            '客户端',
+            clientIp,
+            '请求',
+            url,
+            '无效的 playerId:',
+            params.playerId
+          )
           return
         }
         if (!params.gachaData || Object.keys(params.gachaData).length !== 6) {
@@ -599,10 +699,21 @@ let server = http
             'content-type': 'application/json;charset="utf-8"',
           })
           res.end(JSON.stringify(mcGachaDataUploadRsp))
-          logger.warn('客户端', clientIp, '请求', url, '不完整的 gachaData:', JSON.stringify(params.gachaData))
+          logger.warn(
+            '客户端',
+            clientIp,
+            '请求',
+            url,
+            '不完整的 gachaData:',
+            JSON.stringify(params.gachaData)
+          )
           return
         }
-        let saveRet = mcGachaData.saveGachaData(params.token, {version: params.version, playerId: params.playerId, gachaData: params.gachaData})
+        let saveRet = mcGachaData.saveGachaData(params.token, {
+          version: params.version,
+          playerId: params.playerId,
+          gachaData: params.gachaData,
+        })
         if (saveRet !== null) {
           mcGachaDataUploadRsp.msg = `保存抽卡记录失败: ${saveRet}`
           res.writeHead(200, {
@@ -662,7 +773,14 @@ let server = http
             'content-type': 'application/json;charset="utf-8"',
           })
           res.end(JSON.stringify(mcGachaDataGetRsp))
-          logger.warn('客户端', clientIp, '请求', url, '不支持的版本号', params?.version)
+          logger.warn(
+            '客户端',
+            clientIp,
+            '请求',
+            url,
+            '不支持的版本号',
+            params?.version
+          )
           return
         }
         if (!params.token || !mcGachaData.verifyToken(params?.token)) {
@@ -671,7 +789,14 @@ let server = http
             'content-type': 'application/json;charset="utf-8"',
           })
           res.end(JSON.stringify(mcGachaDataGetRsp))
-          logger.warn('客户端', clientIp, '请求', url, '无效的 token:', params.token)
+          logger.warn(
+            '客户端',
+            clientIp,
+            '请求',
+            url,
+            '无效的 token:',
+            params.token
+          )
           return
         }
         let data = mcGachaData.getGachaData(params?.token)
