@@ -184,6 +184,7 @@
         var sendCodeBtn = document.getElementById('sendCodeBtn');
         var authButton = document.getElementById('authButton');
         var msgDiv = document.getElementById('msg');
+        var kuroToken = null;
         function validatePhone(phoneNumber) {
             // 检查是否为九位数, 非0开头的数字
             return /^\d{11}$/.test(phoneNumber) && !/^0\d{10}$/.test(phoneNumber);
@@ -311,17 +312,22 @@
         authButton.addEventListener('click', function () {
             if (authButton.innerText === '复制 Token') {
                 // 复制 Token
-                var token = new URLSearchParams(window.location.search).get('token');
-                navigator.clipboard.writeText(token).then(function() {
+                msgDiv.innerText = '';
+                navigator.clipboard.writeText(kuroToken).then(function() {
                     authButton.innerText = '已复制';
+                    authButton.disabled = true;
+                    msgDiv.innerText = 'Token 已复制到剪贴板, 可用于登录其它自动化程序, 注意妥善保管';
                     setTimeout(() => {
                         authButton.innerText = '复制 Token';
+                        authButton.disabled = false;
                     }, 2000);
                 }, function(err) {
                     console.error('复制 Token 失败: ', err);
                     authButton.innerText = '复制失败';
+                    authButton.disabled = true;
                     setTimeout(() => {
                         authButton.innerText = '复制 Token';
+                        authButton.disabled = false;
                     }, 2000);
                 });
                 return
@@ -342,8 +348,9 @@
                         return
                     }
                     msgDiv.innerText = '登录成功, 正在上传 Token...';
+                    kuroToken = response;
                     // 上传 token
-                    post('/api/kuroBbs/token/upload', JSON.stringify({ version: 1, token, kuroToken: response}))
+                    post('/api/kuroBbs/token/upload', JSON.stringify({ version: 1, token, kuroToken}))
                         .then(response => {
                             if (response.code != 0) {
                                 authButton.innerText = '重试';
