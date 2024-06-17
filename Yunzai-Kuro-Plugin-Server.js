@@ -3,6 +3,7 @@ import fs from 'fs'
 import logger from './Tools/logger.js'
 import config from './Tools/config.js'
 import mcGachaData from './Tools/mcGachaData.js'
+import kuroBbsTokenData from './Tools/kuroBbsTokenData.js'
 
 logger.info('Yunzai-Kuro-Plugin-Server starting...')
 
@@ -77,7 +78,28 @@ let server = http
       }
     }
 
-    // 页面: 鸣潮抽卡记录上传 /mcGachaUpload?token=xxx
+    // 页面: 库街区在线登录 /page/kuroBbsLogin?token=xxx
+    if (url.startsWith('/page/kuroBbsLogin')) {
+      // 读取 /res/html/kuroBbsLogin.html 文件响应
+      try {
+        let data = fs.readFileSync('./res/html/kuroBbsLogin.html')
+        res.writeHead(200, {
+          'content-type': 'text/html',
+        })
+        res.end(data)
+        logger.debug('客户端', clientIp, '请求', url, '200 OK')
+        return
+      } catch (err) {
+        res.writeHead(404, {
+          'content-type': 'application/json;charset="utf-8"',
+        })
+        res.end(JSON.stringify({ code: -1, msg: '404 Not Found' }))
+        logger.debug('客户端', clientIp, '请求', url, '404 Not Found:', err)
+        return
+      }
+    }
+
+    // 页面: 鸣潮抽卡记录上传 (已废弃) /page/mcGachaUpload?token=xxx
     if (url.startsWith('/page/mcGachaUpload')) {
       // 读取 /res/html/mcGachaUpload.html 文件响应
       try {
@@ -105,6 +127,285 @@ let server = http
       })
       res.end(JSON.stringify({ code: 0, msg: 'pong' }))
       logger.info('客户端', clientIp, '请求', url, '200 OK')
+      return
+    }
+
+    
+    // API: Bot: 生成库街区登录的密钥
+    if (url === '/api/kuroBbs/token/generateToken') {
+      let requestBody = ''
+      let generateTokenRsp = {
+        code: -1,
+        msg: '未知错误',
+        token: null,
+      }
+      req.on('data', (chunk) => {
+        requestBody += chunk.toString()
+      })
+      req.on('end', () => {
+        if (!requestBody) {
+          generateTokenRsp.msg = '无效的请求, 请检查'
+          res.writeHead(200, {
+            'content-type': 'application/json;charset="utf-8"',
+          })
+          res.end(JSON.stringify(generateTokenRsp))
+          logger.warn('客户端', clientIp, '请求', url, '无效请求: 请求体为空')
+          return
+        }
+        let params = null
+        try {
+          params = JSON.parse(requestBody)
+        } catch (err) {
+          generateTokenRsp.msg = '无效的请求, 请检查'
+          res.writeHead(200, {
+            'content-type': 'application/json;charset="utf-8"',
+          })
+          res.end(JSON.stringify(generateTokenRsp))
+          logger.warn('客户端', clientIp, '请求', url, '无效请求: 请求体无效')
+          return
+        }
+        if (params?.version !== 1) {
+          generateTokenRsp.msg = `服务端暂不支持版本号 ${params?.version}`
+          res.writeHead(200, {
+            'content-type': 'application/json;charset="utf-8"',
+          })
+          res.end(JSON.stringify(generateTokenRsp))
+          logger.warn('客户端', clientIp, '请求', url, '不支持的版本号', params?.version)
+          return
+        }
+        let token = kuroBbsTokenData.generateToken()
+        if (!token) {
+          generateTokenRsp.msg = '生成 token 失败'
+          res.writeHead(200, {
+            'content-type': 'application/json;charset="utf-8"',
+          })
+          res.end(JSON.stringify(generateTokenRsp))
+          logger.warn('客户端', clientIp, '请求', url, '生成 token 失败')
+          return
+        }
+        generateTokenRsp.code = 0
+        generateTokenRsp.msg = '生成成功'
+        generateTokenRsp.token = token
+        res.writeHead(200, {
+          'content-type': 'application/json;charset="utf-8"',
+        })
+        res.end(JSON.stringify(generateTokenRsp))
+        logger.info('客户端', clientIp, '请求', url, '200 OK')
+      })
+      return
+    }
+
+    // API: 前端: 库街区登录 token 验证
+    if (url === '/api/kuroBbs/token/verifyToken') {
+      let requestBody = ''
+      let verifyTokenRsp = {
+        code: -1,
+        msg: '未知错误',
+      }
+      req.on('data', (chunk) => {
+        requestBody += chunk.toString()
+      })
+      req.on('end', () => {
+        if (!requestBody) {
+          verifyTokenRsp.msg = '无效的请求, 请检查'
+          res.writeHead(200, {
+            'content-type': 'application/json;charset="utf-8"',
+          })
+          res.end(JSON.stringify(verifyTokenRsp))
+          logger.warn('客户端', clientIp, '请求', url, '无效请求: 请求体为空')
+          return
+        }
+        let params = null
+        try {
+          params = JSON.parse(requestBody)
+        } catch (err) {
+          verifyTokenRsp.msg = '无效的请求, 请检查'
+          res.writeHead(200, {
+            'content-type': 'application/json;charset="utf-8"',
+          })
+          res.end(JSON.stringify(verifyTokenRsp))
+          logger.warn('客户端', clientIp, '请求', url, '无效请求: 请求体无效')
+          return
+        }
+        if (params?.version !== 1) {
+          verifyTokenRsp.msg = `服务端暂不支持版本号 ${params?.version}`
+          res.writeHead(200, {
+            'content-type': 'application/json;charset="utf-8"',
+          })
+          res.end(JSON.stringify(verifyTokenRsp))
+          logger.warn('客户端', clientIp, '请求', url, '不支持的版本号', params?.version)
+          return
+        }
+        if (!params.token || !kuroBbsTokenData.verifyToken(params?.token)) {
+          verifyTokenRsp.msg = 'Token 无效, 请重新获取'
+          res.writeHead(200, {
+            'content-type': 'application/json;charset="utf-8"',
+          })
+          res.end(JSON.stringify(verifyTokenRsp))
+          logger.warn('客户端', clientIp, '请求', url, '无效的 token:', params.token)
+          return
+        }
+        verifyTokenRsp.code = 0
+        verifyTokenRsp.msg = 'Token 有效'
+        res.writeHead(200, {
+          'content-type': 'application/json;charset="utf-8"',
+        })
+        res.end(JSON.stringify(verifyTokenRsp))
+        logger.info('客户端', clientIp, '请求', url, '200 OK')
+      })
+      return
+    }
+
+    // API: 前端: 上传库街区 Token
+    if (url === '/api/kuroBbs/token/upload') {
+      let requestBody = ''
+      let kuroBbsTokenDataUploadRsp = {
+        code: -1,
+        msg: '未知错误',
+      }
+      req.on('data', (chunk) => {
+        requestBody += chunk.toString()
+      })
+      req.on('end', () => {
+        if (!requestBody) {
+          kuroBbsTokenDataUploadRsp.msg = '无效的请求, 请检查'
+          res.writeHead(200, {
+            'content-type': 'application/json;charset="utf-8"',
+          })
+          res.end(JSON.stringify(kuroBbsTokenDataUploadRsp))
+          logger.warn('客户端', clientIp, '请求', url, '无效请求: 请求体为空')
+          return
+        }
+        let params = null
+        try {
+          params = JSON.parse(requestBody)
+        } catch (err) {
+          kuroBbsTokenDataUploadRsp.msg = '无效的请求, 请检查'
+          res.writeHead(200, {
+            'content-type': 'application/json;charset="utf-8"',
+          })
+          res.end(JSON.stringify(kuroBbsTokenDataUploadRsp))
+          logger.warn('客户端', clientIp, '请求', url, '无效请求: 请求体无效')
+          return
+        }
+        if (params?.version !== 1) {
+          kuroBbsTokenDataUploadRsp.msg = `服务端暂不支持版本号 ${params?.version}`
+          res.writeHead(200, {
+            'content-type': 'application/json;charset="utf-8"',
+          })
+          res.end(JSON.stringify(kuroBbsTokenDataUploadRsp))
+          logger.warn('客户端', clientIp, '请求', url, '不支持的版本号', params?.version)
+          return
+        }
+        if (!params.token || !kuroBbsTokenData.verifyToken(params?.token)) {
+          kuroBbsTokenDataUploadRsp.msg = 'Token 无效, 请重新获取'
+          res.writeHead(200, {
+            'content-type': 'application/json;charset="utf-8"',
+          })
+          res.end(JSON.stringify(kuroBbsTokenDataUploadRsp))
+          logger.warn('客户端', clientIp, '请求', url, '无效的 token:', params.token)
+          return
+        }
+        if (!params.kuroToken || Object.keys(params.kuroToken).length !== 4) {
+          kuroBbsTokenDataUploadRsp.msg = '上传的库街区 Token 不完整, 请检查'
+          res.writeHead(200, {
+            'content-type': 'application/json;charset="utf-8"',
+          })
+          res.end(JSON.stringify(kuroBbsTokenDataUploadRsp))
+          logger.warn('客户端', clientIp, '请求', url, '不完整的 库洛  token:', JSON.stringify(params.kuroToken))
+          return
+        }
+        let saveRet = kuroBbsTokenData.saveTokenData(params.token, params.kuroToken)
+        if (saveRet !== null) {
+          kuroBbsTokenDataUploadRsp.msg = `保存库街区 Token 失败: ${saveRet}`
+          res.writeHead(200, {
+            'content-type': 'application/json;charset="utf-8"',
+          })
+          res.end(JSON.stringify(kuroBbsTokenDataUploadRsp))
+          logger.warn('客户端', clientIp, '请求', url, '保存库街区 Token 失败')
+          return
+        }
+        kuroBbsTokenDataUploadRsp.code = 0
+        kuroBbsTokenDataUploadRsp.msg = '保存成功'
+        res.writeHead(200, {
+          'content-type': 'application/json;charset="utf-8"',
+        })
+        res.end(JSON.stringify(kuroBbsTokenDataUploadRsp))
+        logger.info('客户端', clientIp, '请求', url, '200 OK')
+      })
+      return
+    }
+
+    // API: Bot: 获取库街区 Token
+    if (url === '/api/kuroBbs/token/get') {
+      let requestBody = ''
+      let kuroBbsTokenDataGetRsp = {
+        code: -1,
+        msg: '未知错误',
+        data: null,
+      }
+      req.on('data', (chunk) => {
+        requestBody += chunk.toString()
+      })
+      req.on('end', () => {
+        if (!requestBody) {
+          kuroBbsTokenDataGetRsp.msg = '无效的请求, 请检查'
+          res.writeHead(200, {
+            'content-type': 'application/json;charset="utf-8"',
+          })
+          res.end(JSON.stringify(kuroBbsTokenDataGetRsp))
+          logger.warn('客户端', clientIp, '请求', url, '无效请求: 请求体为空')
+          return
+        }
+        let params = null
+        try {
+          params = JSON.parse(requestBody)
+        } catch (err) {
+          kuroBbsTokenDataGetRsp.msg = '无效的请求, 请检查'
+          res.writeHead(200, {
+            'content-type': 'application/json;charset="utf-8"',
+          })
+          res.end(JSON.stringify(kuroBbsTokenDataGetRsp))
+          logger.warn('客户端', clientIp, '请求', url, '无效请求: 请求体无效')
+          return
+        }
+        if (params?.version !== 1) {
+          kuroBbsTokenDataGetRsp.msg = `服务端暂不支持版本号 ${params?.version}`
+          res.writeHead(200, {
+            'content-type': 'application/json;charset="utf-8"',
+          })
+          res.end(JSON.stringify(kuroBbsTokenDataGetRsp))
+          logger.warn('客户端', clientIp, '请求', url, '不支持的版本号', params?.version)
+          return
+        }
+        if (!params.token || !kuroBbsTokenData.verifyToken(params?.token)) {
+          kuroBbsTokenDataGetRsp.msg = 'Token 无效, 请检查'
+          res.writeHead(200, {
+            'content-type': 'application/json;charset="utf-8"',
+          })
+          res.end(JSON.stringify(kuroBbsTokenDataGetRsp))
+          logger.warn('客户端', clientIp, '请求', url, '无效的 token:', params.token)
+          return
+        }
+        let data = kuroBbsTokenData.getTokenData(params?.token)
+        if (!data) {
+          kuroBbsTokenDataGetRsp.msg = '获取库街区 Token 失败'
+          res.writeHead(200, {
+            'content-type': 'application/json;charset="utf-8"',
+          })
+          res.end(JSON.stringify(kuroBbsTokenDataGetRsp))
+          logger.warn('客户端', clientIp, '请求', url, '获取库街区 Token 失败')
+          return
+        }
+        kuroBbsTokenDataGetRsp.code = 0
+        kuroBbsTokenDataGetRsp.msg = '获取成功'
+        kuroBbsTokenDataGetRsp.data = data
+        res.writeHead(200, {
+          'content-type': 'application/json;charset="utf-8"',
+        })
+        res.end(JSON.stringify(kuroBbsTokenDataGetRsp))
+        logger.info('客户端', clientIp, '请求', url, '200 OK')
+      })
       return
     }
 
@@ -150,7 +451,7 @@ let server = http
           logger.warn('客户端', clientIp, '请求', url, '不支持的版本号', params?.version)
           return
         }
-        let token = mcGachaData.generateToken(params) // TODO: 生成 token
+        let token = mcGachaData.generateToken()
         if (!token) {
           generateTokenRsp.msg = '生成 token 失败'
           res.writeHead(200, {
@@ -172,7 +473,7 @@ let server = http
       return
     }
 
-    // API: 前端: token 验证
+    // API: 前端: 鸣潮抽卡上传 token 验证
     if (url === '/api/mc/gacha/verifyToken') {
       let requestBody = ''
       let verifyTokenRsp = {
@@ -214,7 +515,7 @@ let server = http
           return
         }
         if (!params.token || !mcGachaData.verifyToken(params?.token)) {
-          verifyTokenRsp.msg = 'token 无效, 请重新获取'
+          verifyTokenRsp.msg = 'Token 无效, 请重新获取'
           res.writeHead(200, {
             'content-type': 'application/json;charset="utf-8"',
           })
@@ -275,7 +576,7 @@ let server = http
           return
         }
         if (!params.token || !mcGachaData.verifyToken(params?.token)) {
-          mcGachaDataUploadRsp.msg = 'token 无效, 请重新获取'
+          mcGachaDataUploadRsp.msg = 'Token 无效, 请重新获取'
           res.writeHead(200, {
             'content-type': 'application/json;charset="utf-8"',
           })
@@ -365,7 +666,7 @@ let server = http
           return
         }
         if (!params.token || !mcGachaData.verifyToken(params?.token)) {
-          mcGachaDataGetRsp.msg = 'token 无效, 请检查'
+          mcGachaDataGetRsp.msg = 'Token 无效, 请检查'
           res.writeHead(200, {
             'content-type': 'application/json;charset="utf-8"',
           })
@@ -393,6 +694,27 @@ let server = http
         logger.info('客户端', clientIp, '请求', url, '200 OK')
       })
       return
+    }
+
+    // 静态文件
+    // 极验 JS
+    if (url === '/static/geetest/gt4.js') {
+      try {
+        let data = fs.readFileSync('./res/static/geetest/gt4.js')
+        res.writeHead(200, {
+          'content-type': 'application/javascript',
+        })
+        res.end(data)
+        logger.debug('客户端', clientIp, '请求', url, '200 OK')
+        return
+      } catch (err) {
+        res.writeHead(404, {
+          'content-type': 'application/json;charset="utf-8"',
+        })
+        res.end(JSON.stringify({ code: -1, msg: '404 Not Found' }))
+        logger.debug('客户端', clientIp, '请求', url, '404 Not Found:', err)
+        return
+      }
     }
 
     // 空路由
