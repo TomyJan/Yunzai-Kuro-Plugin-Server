@@ -192,7 +192,7 @@
 
         function kuroBbsSendCode(phoneNumber, geeTestData) {
             console.log('发送库洛验证码: ', phoneNumber, '极验: ', geeTestData);
-            return post('https://api.kurobbs.com/user/getSmsCode', `mobile=${phoneNumber}&geeTestData=${encodeURIComponent(geeTestData) || ''}`, { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8', 'Source': 'h5'})
+            return post('https://api.kurobbs.com/user/getSmsCode', `mobile=${phoneNumber}&geeTestData=${encodeURIComponent(geeTestData) || ''}`, { 'Content-Type': 'application/x-www-form-urlencoded', 'source': 'android', 'devCode': 'devCode'}) // TODO: devCode
                 .then(response => {
                     console.log(response);
                     return response
@@ -204,7 +204,7 @@
 
         function kuroBbsLogin(phoneNumber, code) {
             console.log('登录库街区: ', phoneNumber, '验证码: ', code);
-            return post('https://api.kurobbs.com/user/sdkLogin', `mobile=${phoneNumber}&code=${code}&devCode=devCode`, { 'Content-Type': 'application/x-www-form-urlencoded', 'Source': 'android'}) // TODO: devCode
+            return post('https://api.kurobbs.com/user/sdkLogin', `mobile=${phoneNumber}&code=${code}&devCode=devCode`, { 'Content-Type': 'application/x-www-form-urlencoded', 'source': 'android'}) // TODO: devCode
                 .then(response => {
                     console.log(response);
                     return response
@@ -243,7 +243,7 @@
 
         // 初始化极验
         initGeetest4({
-                captchaId: '223f7e2d848ce0cb7e7d019d621e556ce2', // 库街区 APP 端
+                captchaId: '3f7e2d848ce0cb7e7d019d621e556ce2', // 库街区 APP 端
                 product: 'bind'
             },function (captchaObj) {
                 captchaObj.onReady(function(){
