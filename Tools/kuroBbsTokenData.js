@@ -27,12 +27,22 @@ class kuroBbsTokenDataManager {
     fs.readdirSync(this.dataPath).forEach((file) => {
       let filePath = this.dataPath + file
       let stat = fs.statSync(filePath)
-      if (file.endsWith('.json') && (now - stat.mtimeMs > 3 * 60 * 1000 || stat.size > 10)) {
+      if (
+        file.endsWith('.json') &&
+        (now - stat.mtimeMs > 3 * 60 * 1000 || stat.size > 10)
+      ) {
         fs.unlinkSync(filePath)
-        logger.warn('删除超时或已使用的 token', file, '修改时间:', stat.mtimeMs, '文件大小:', stat.size)
+        logger.warn(
+          '删除超时或已使用的 token',
+          file,
+          '修改时间:',
+          stat.mtimeMs,
+          '文件大小:',
+          stat.size
+        )
       }
     })
-    
+
     logger.info('库街区 token 目录初始化完成')
   }
 
