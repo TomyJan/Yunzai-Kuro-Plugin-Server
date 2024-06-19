@@ -21,6 +21,18 @@ class kuroBbsTokenDataManager {
       logger.error('无法读取/创建库街区 token 目录:', err)
       exit(1)
     }
+
+    // 删除目录下所有修改时间在 3 分钟前的 json 文件
+    let now = Date.now()
+    fs.readdirSync(this.dataPath).forEach((file) => {
+      let filePath = this.dataPath + file
+      let stat = fs.statSync(filePath)
+      if (file.endsWith('.json') && (now - stat.mtimeMs > 3 * 60 * 1000 || stat.size > 10)) {
+        fs.unlinkSync(filePath)
+        logger.warn('删除超时或已使用的 token', file, '修改时间:', stat.mtimeMs, '文件大小:', stat.size)
+      }
+    })
+    
     logger.info('库街区 token 目录初始化完成')
   }
 

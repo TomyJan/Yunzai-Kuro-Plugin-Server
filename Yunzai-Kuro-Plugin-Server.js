@@ -462,7 +462,7 @@ let server = http
           'content-type': 'application/json;charset="utf-8"',
         })
         res.end(JSON.stringify(kuroBbsTokenDataGetRsp))
-        logger.info('客户端', clientIp, '请求', url, '200 OK')
+        logger.debug('客户端', clientIp, '请求', url, '200 OK')
       })
       return
     }
