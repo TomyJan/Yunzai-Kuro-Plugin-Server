@@ -34,12 +34,6 @@ class mcGachaDataManager {
       let tokenPath = this.dataPath + token + '.json'
       if (!fs.existsSync(tokenPath)) {
         fs.writeFileSync(tokenPath, '{}')
-        setTimeout(() => {
-          if (fs.existsSync(tokenPath)) {
-            fs.unlinkSync(tokenPath)
-            logger.warn('删除超时未使用的 token', token)
-          }
-        }, 3 * 60 * 1000)
         return token
       }
     } while (true)
