@@ -187,6 +187,7 @@
         var authButton = document.getElementById('authButton');
         var msgDiv = document.getElementById('msg');
         var kuroToken = null;
+        var isGeetestReady = false;
         function validatePhone(phoneNumber) {
             // 检查是否为九位数, 非0开头的数字
             return /^\d{11}$/.test(phoneNumber) && !/^0\d{10}$/.test(phoneNumber);
@@ -194,7 +195,7 @@
 
         function kuroBbsSendCode(phoneNumber, geeTestData) {
             console.log('发送库洛验证码: ', phoneNumber, '极验: ', geeTestData);
-            return post('https://api.kurobbs.com/user/getSmsCode', `mobile=${phoneNumber}&geeTestData=${encodeURIComponent(geeTestData) || ''}`, { 'Content-Type': 'application/x-www-form-urlencoded', 'source': 'android', 'devCode': 'devCode'}) // TODO: devCode
+            return post('https://api.kurobbs.com/user/getSmsCode', `mobile=${phoneNumber}&geeTestData=${encodeURIComponent(geeTestData) || ''}`, { 'Content-Type': 'application/x-www-form-urlencoded', 'source': 'android', 'devCode': '6B86B273FF34FCE19D6B804EFF5A3F5747ADA4EA'})
                 .then(response => {
                     console.log(response);
                     return response
@@ -206,7 +207,7 @@
 
         function kuroBbsLogin(phoneNumber, code) {
             console.log('登录库街区: ', phoneNumber, '验证码: ', code);
-            return post('https://api.kurobbs.com/user/sdkLogin', `mobile=${phoneNumber}&code=${code}&devCode=devCode`, { 'Content-Type': 'application/x-www-form-urlencoded', 'source': 'android'}) // TODO: devCode
+            return post('https://api.kurobbs.com/user/sdkLogin', `mobile=${phoneNumber}&code=${code}&devCode=6B86B273FF34FCE19D6B804EFF5A3F5747ADA4EA`, { 'Content-Type': 'application/x-www-form-urlencoded', 'source': 'android'})
                 .then(response => {
                     console.log(response);
                     return response
@@ -229,17 +230,23 @@
         if (phoneNumber) {
             phoneInput.value = phoneNumber;
             authButton.disabled = !validatePhone(this.value) || codeInput.value.length < 6;
+            sendCodeBtn.disabled = !validatePhone(this.value) || !isGeetestReady;
+            if (isGeetestReady) sendCodeBtn.innerText = '发送';
         }
 
         phoneInput.addEventListener('input', function () {
             localStorage.setItem('kuroPluginPhoneNumber', this.value);
             authButton.innerText = '登录';
             authButton.disabled = !validatePhone(this.value) || codeInput.value.length < 6;
+            sendCodeBtn.disabled = !validatePhone(this.value) || !isGeetestReady;
+            if (isGeetestReady) sendCodeBtn.innerText = '发送';
             msgDiv.innerText = '';
         });
         codeInput.addEventListener('input', function () {
             authButton.innerText = '登录';
             authButton.disabled = !validatePhone(phoneInput.value) || codeInput.value.length < 6;
+            sendCodeBtn.disabled = !validatePhone(phoneInput.value) || !isGeetestReady;
+            if (isGeetestReady) sendCodeBtn.innerText = '发送';
             msgDiv.innerText = '';
         });
 
@@ -250,9 +257,11 @@
             },function (captchaObj) {
                 captchaObj.onReady(function(){
                     console.log('极验初始化完成');
-                    sendCodeBtn.disabled = false;
+                    isGeetestReady = true;
+                    sendCodeBtn.disabled = !validatePhone(phoneInput.value);
                     sendCodeBtn.innerText = '发送';
                 }).onSuccess(function(){
+                    sendCodeBtn.disabled = true;
                     console.log('极验验证成功');
                     var result = captchaObj.getValidate();
                     console.log('极验验证结果: ', result);
@@ -269,7 +278,7 @@
                                 return
                             }
                             msgDiv.innerText = '发送验证码成功';
-                            sendCodeBtn.disabled = false;
+                            sendCodeBtn.innerText = '已发送';
                         }).catch(error => {
                             console.error('发送验证码请求失败: ', error);
                             msgDiv.innerText = '发送验证码失败: ' + error;
@@ -302,7 +311,7 @@
                                 return
                             }
                             msgDiv.innerText = '发送验证码成功';
-                            sendCodeBtn.disabled = false;
+                            sendCodeBtn.innerText = '已发送';
                         }).catch(error => {
                             console.error('发送验证码请求失败: ', error);
                             msgDiv.innerText = '发送验证码失败: ' + error;
