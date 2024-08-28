@@ -192,10 +192,26 @@
             // 检查是否为九位数, 非0开头的数字
             return /^\d{11}$/.test(phoneNumber) && !/^0\d{10}$/.test(phoneNumber);
         }
+        function generateFixedString(inputString, length = 40) {
+          // NOTE: 这里的方法应该与插件里的保持同步, 并且注意删除 log, 替换部分方法 (如 crypto.createHash )
+          if (!inputString) {
+            inputString = '1'
+          }
+          inputString = inputString.toString()
+          if (length > 64) {
+            length = 64
+          }
+          const encoder = new TextEncoder();
+          const data = encoder.encode(inputString);
+          const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+          const hashArray = Array.from(new Uint8Array(hashBuffer));
+          const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+          return hashHex.substring(0, length).toUpperCase();
+        }
 
         function kuroBbsSendCode(phoneNumber, geeTestData) {
             console.log('发送库洛验证码: ', phoneNumber, '极验: ', geeTestData);
-            return post('https://api.kurobbs.com/user/getSmsCode', `mobile=${phoneNumber}&geeTestData=${encodeURIComponent(geeTestData) || ''}`, { 'Content-Type': 'application/x-www-form-urlencoded', 'source': 'android', 'devCode': '6B86B273FF34FCE19D6B804EFF5A3F5747ADA4EA'})
+            return post('https://api.kurobbs.com/user/getSmsCode', `mobile=${phoneNumber}&geeTestData=${encodeURIComponent(geeTestData) || ''}`, { 'Content-Type': 'application/x-www-form-urlencoded', 'source': 'android', 'devCode': generateFixedString(phoneNumber)} )
                 .then(response => {
                     console.log(response);
                     return response
@@ -207,7 +223,7 @@
 
         function kuroBbsLogin(phoneNumber, code) {
             console.log('登录库街区: ', phoneNumber, '验证码: ', code);
-            return post('https://api.kurobbs.com/user/sdkLogin', `mobile=${phoneNumber}&code=${code}&devCode=6B86B273FF34FCE19D6B804EFF5A3F5747ADA4EA`, { 'Content-Type': 'application/x-www-form-urlencoded', 'source': 'android'})
+            return post('https://api.kurobbs.com/user/sdkLogin', `mobile=${phoneNumber}&code=${code}&devCode=${generateFixedString(phoneNumber)}`, { 'Content-Type': 'application/x-www-form-urlencoded', 'source': 'android', 'devcode': generateFixedString(phoneNumber)})
                 .then(response => {
                     console.log(response);
                     return response
