@@ -192,45 +192,43 @@
             // 检查是否为九位数, 非0开头的数字
             return /^\d{11}$/.test(phoneNumber) && !/^0\d{10}$/.test(phoneNumber);
         }
-        function generateFixedString(inputString, length = 40) {
-          // NOTE: 这里的方法应该与插件里的保持同步, 并且注意删除 log, 替换部分方法 (如 crypto.createHash )
-          if (!inputString) {
-            inputString = '1'
-          }
-          inputString = inputString.toString()
-          if (length > 64) {
-            length = 64
-          }
-          const encoder = new TextEncoder();
-          const data = encoder.encode(inputString);
-          const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-          const hashArray = Array.from(new Uint8Array(hashBuffer));
-          const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-          return hashHex.substring(0, length).toUpperCase();
+        async function generateFixedString(inputString, length = 40) {
+            // NOTE: 这里的方法应该与插件里的保持同步, 并且注意删除 log, 替换部分方法 (如 crypto.createHash )
+            if (!inputString) {
+                inputString = '1'
+            }
+            inputString = inputString.toString()
+            if (length > 64) {
+                length = 64
+            }
+            const encoder = new TextEncoder();
+            const data = encoder.encode(inputString);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            return hashHex.substring(0, length).toUpperCase();
         }
 
-        function kuroBbsSendCode(phoneNumber, geeTestData) {
-            console.log('发送库洛验证码: ', phoneNumber, '极验: ', geeTestData);
-            return post('https://api.kurobbs.com/user/getSmsCode', `mobile=${phoneNumber}&geeTestData=${encodeURIComponent(geeTestData) || ''}`, { 'Content-Type': 'application/x-www-form-urlencoded', 'source': 'android', 'devCode': generateFixedString(phoneNumber)} )
-                .then(response => {
-                    console.log(response);
-                    return response
-                }).catch(error => {
-                    console.error('发送验证码请求失败: ', error);
-                    return error
-                });
+        async function kuroBbsSendCode(phoneNumber, geeTestData) {
+            return fetch('https://api.kurobbs.com/user/getSmsCode', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'source': 'android', 'devCode': await generateFixedString(phoneNumber)},
+                body: `mobile=${phoneNumber}&geeTestData=${encodeURIComponent(geeTestData) || ''}`
+            }).then(response => response.json())
+            .catch(err => {
+                return err;
+            });
         }
 
-        function kuroBbsLogin(phoneNumber, code) {
-            console.log('登录库街区: ', phoneNumber, '验证码: ', code);
-            return post('https://api.kurobbs.com/user/sdkLogin', `mobile=${phoneNumber}&code=${code}&devCode=${generateFixedString(phoneNumber)}`, { 'Content-Type': 'application/x-www-form-urlencoded', 'source': 'android', 'devcode': generateFixedString(phoneNumber)})
-                .then(response => {
-                    console.log(response);
-                    return response
-                }).catch(error => {
-                    console.error('库街区登录请求失败: ', error);
-                    return error
-                });
+        async function kuroBbsLogin(phoneNumber, code) {
+            return fetch('https://api.kurobbs.com/user/sdkLogin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'source': 'android', 'devcode': await generateFixedString(phoneNumber)},
+                body: `mobile=${phoneNumber}&code=${code}`
+            }).then(response => response.json())
+            .catch(err => {
+                return err;
+            });
         }
 
         function post(url, data, headers = {}) {
@@ -270,36 +268,30 @@
         initGeetest4({
                 captchaId: '3f7e2d848ce0cb7e7d019d621e556ce2', // 库街区 APP 端
                 product: 'bind'
-            },function (captchaObj) {
+            }, function (captchaObj) {
                 captchaObj.onReady(function(){
                     console.log('极验初始化完成');
                     isGeetestReady = true;
                     sendCodeBtn.disabled = !validatePhone(phoneInput.value);
                     sendCodeBtn.innerText = '发送';
-                }).onSuccess(function(){
+                }).onSuccess(async function(){
                     sendCodeBtn.disabled = true;
                     console.log('极验验证成功');
                     var result = captchaObj.getValidate();
                     console.log('极验验证结果: ', result);
-                    kuroBbsSendCode(phoneInput.value, JSON.stringify(result))
-                        .then(response => {
-                            if (response.code != 200) {
-                                msgDiv.innerText = '发送验证码失败: ' + response?.msg;
-                                sendCodeBtn.disabled = false;
-                                return
-                            }
-                            if(response?.data?.geeTest){
-                                sendCodeBtn.disabled = false;
-                                captchaObj.showCaptcha(); // 显示验证码
-                                return
-                            }
-                            msgDiv.innerText = '发送验证码成功';
-                            sendCodeBtn.innerText = '已发送';
-                        }).catch(error => {
-                            console.error('发送验证码请求失败: ', error);
-                            msgDiv.innerText = '发送验证码失败: ' + error;
-                            sendCodeBtn.disabled = false;
-                        });
+                    var response = await kuroBbsSendCode(phoneInput.value, JSON.stringify(result));
+                    if (response.code != 200) {
+                        msgDiv.innerText = '发送验证码失败: ' + response?.msg;
+                        sendCodeBtn.disabled = false;
+                        return;
+                    }
+                    if(response?.data?.geeTest){
+                        sendCodeBtn.disabled = false;
+                        captchaObj.showCaptcha();
+                        return;
+                    }
+                    msgDiv.innerText = '发送验证码成功'; // 显示验证码
+                    sendCodeBtn.innerText = '已发送';
                 }).onError(function(error){
                     console.error('极验验证出错: ' + JSON.stringify(error));
                     msgDiv.innerText = '极验验证出错: '+ error.msg;
@@ -311,32 +303,26 @@
                     msgDiv.innerText = '请先完成验证';
                 });
 
-                sendCodeBtn.addEventListener('click', function () {
+                sendCodeBtn.addEventListener('click', async function () {
                     sendCodeBtn.disabled = true;
                     msgDiv.innerText = '';
-                    kuroBbsSendCode(phoneInput.value, '')
-                        .then(response => {
-                            if (response.code != 200) {
-                                msgDiv.innerText = '发送验证码失败: ' + response?.msg;
-                                sendCodeBtn.disabled = false;
-                                return
-                            }
-                            if(response?.data?.geeTest){
-                                sendCodeBtn.disabled = false;
-                                captchaObj.showCaptcha(); // 显示验证码
-                                return
-                            }
-                            msgDiv.innerText = '发送验证码成功';
-                            sendCodeBtn.innerText = '已发送';
-                        }).catch(error => {
-                            console.error('发送验证码请求失败: ', error);
-                            msgDiv.innerText = '发送验证码失败: ' + error;
-                            sendCodeBtn.disabled = false;
-                        });
+                    var response = await kuroBbsSendCode(phoneInput.value, '');
+                    if (response.code != 200) {
+                        msgDiv.innerText = '发送验证码失败: ' + response?.msg;
+                        sendCodeBtn.disabled = false;
+                        return;
+                    }
+                    if(response?.data?.geeTest){
+                        sendCodeBtn.disabled = false;
+                        captchaObj.showCaptcha(); // 显示验证码
+                        return;
+                    }
+                    msgDiv.innerText = '发送验证码成功';
+                    sendCodeBtn.innerText = '已发送';
                 })
             });
 
-        authButton.addEventListener('click', function () {
+        authButton.addEventListener('click', async function () {
             if (authButton.innerText === '复制 Token') {
                 // 复制 Token
                 msgDiv.innerText = '';
@@ -357,45 +343,34 @@
                         authButton.disabled = false;
                     }, 2000);
                 });
-                return
+                return;
             }
             authButton.disabled = true;
             authButton.innerText = '登录中...';
             msgDiv.innerText = '';
             var phoneNumber = phoneInput.value;
             var token = new URLSearchParams(window.location.search).get('token');
-
-            // 尝试登录
-            kuroBbsLogin(phoneNumber, codeInput.value)
-                .then(response => {
-                    if (response.code != 200) {
-                        authButton.innerText = '重试';
-                        authButton.disabled = false;
-                        msgDiv.innerText = '登录失败: ' + response?.msg;
-                        return
-                    }
-                    msgDiv.innerText = '登录成功, 正在上传 Token...';
-                    kuroToken = response;
-                    // 上传 token
-                    post('/api/kuroBbs/token/upload', JSON.stringify({ version: 1, token, kuroToken}))
-                        .then(response => {
-                            if (response.code != 0) {
-                                authButton.innerText = '重试';
-                                authButton.disabled = false;
-                                msgDiv.innerText = '上传 Token 失败: ' + response?.msg;
-                            } else {
-                                sendCodeBtn.disabled = true;
-                                authButton.disabled = false;
-                                authButton.innerText = '复制 Token';
-                                msgDiv.innerText = 'Token 上传成功, 稍等几秒 Bot 会自动登录';
-                            }
-                        });
-                }).catch(error => {
-                    console.error('库街区登录请求失败: ', error);
-                    authButton.innerText = '重试';
-                    authButton.disabled = false;
-                    msgDiv.innerText = '登录失败: ' + error;
-                });
+            var response = await kuroBbsLogin(phoneNumber, codeInput.value);
+            if (response.code != 200) {
+                authButton.innerText = '重试';
+                authButton.disabled = false;
+                msgDiv.innerText = '登录失败: ' + response?.msg;
+                return;
+            }
+            msgDiv.innerText = '登录成功, 正在上传 Token...';
+            kuroToken = response;
+            // 上传 token
+            response = await post('/api/kuroBbs/token/upload', JSON.stringify({ version: 1, token, kuroToken}));
+            if (response.code != 0) {
+                authButton.innerText = '重试';
+                authButton.disabled = false;
+                msgDiv.innerText = '上传 Token 失败: ' + response?.msg;
+            } else {
+                sendCodeBtn.disabled = true;
+                authButton.disabled = false;
+                authButton.innerText = '复制 Token';
+                msgDiv.innerText = 'Token 上传成功, 稍等几秒 Bot 会自动登录';
+            }
         });
 
         // 绑定按键事件
@@ -405,18 +380,12 @@
             }
         });
 
-        // 开始检查参数
-        checkParams();
-
-        function checkParams() {
-            // 检查服务器是否正常
-            post('/api/ping')
-                .then(response => {
-                    if (response.code != 0) {
-                        checkMsg.innerText = '服务器异常: ' + response.msg;
-                        return
-                    }
-                });
+        async function checkParams() {
+            var response = await post('/api/ping');
+            if (response.code != 0) {
+                checkMsg.innerText = '服务器异常: ' + response.msg;
+                return;
+            }
             
             var urlParams = new URLSearchParams(window.location.search);
             var token = urlParams.get('token');
@@ -428,25 +397,24 @@
                 checkMsg.innerText = 'Token 格式错误, 请重新获取';
                 return;
             }
-            // 使用 api /api/kuroBbs/token/verifyToken 验证 token
-            post('/api/kuroBbs/token/verifyToken', JSON.stringify({ token, version: 1 }))
-                .then(response => {
-                    if (response.code != 0) {
-                        checkMsg.innerText = response.msg;
-                        return;
-                    } else { // 所有检查通过, 显示内容
-                        checkMsg.innerText = '';
-                        // 隐藏 checkTip
-                        checkTip.style.display = 'none';
-                        // 显示所有 actionContents
-                        for (var i = 0; i < actionContents.length; i++) {
-                            actionContents[i].style.display = 'block';
-                        }
-                    }
-                });
-            
 
+            // 使用 api /api/kuroBbs/token/verifyToken 验证 token
+            response = await post('/api/kuroBbs/token/verifyToken', JSON.stringify({ token, version: 1 }));
+            if (response.code != 0) {
+                checkMsg.innerText = response.msg;
+                return;
+            }
+            // 所有检查通过, 显示内容
+            checkMsg.innerText = '';
+            // 隐藏 checkTip
+            checkTip.style.display = 'none';
+            // 显示所有 actionContents
+            for (var i = 0; i < actionContents.length; i++) {
+                actionContents[i].style.display = 'block';
+            }
         }
+
+        checkParams(); // 开始检查参数
     </script>
 
 </body>
