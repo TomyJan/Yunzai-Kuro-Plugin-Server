@@ -261,9 +261,9 @@ app.post('/api/mc/gacha/get', versionCheck, mcGachaTokenCheck, (req, res) => {
 })
 
 // GitHub 仓库代理
-// 请求示例: /repos/TomyJan/Yunzai-Kuro-Plugin/master/README.md
-app.get('/repos/*', async (req, res) => {
-  const path = req.params[0]
+// 请求示例: /repo/raw/TomyJan/Yunzai-Kuro-Plugin/master/README.md
+app.get('/repo/raw/*', async (req, res) => {
+  const path = req.params[0].replace('/repo/raw/', '/repo/') // 懒得改后面的代码, 暂时这样吧后面如果写新的再改
   logger.debug(`[GitHub代理] 收到请求: ${path}`)
 
   // 检查是否匹配白名单
