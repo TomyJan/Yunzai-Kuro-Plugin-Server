@@ -198,7 +198,7 @@ export const githubRepoCheck = (req, res, next) => {
     repo,
     pathParts: path.split('/'),
     branch: path.split('/')[2] || 'main',
-    filePath: path.split('/').slice(3).join('/')
+    filePath: path.split('/').slice(3).join('/'),
   }
 
   next()
@@ -286,11 +286,11 @@ export const githubPreview = async (req, res) => {
     }
 
     const text = await response.text()
-    
+
     // 根据文件类型处理预览
     if (fileExt === 'md') {
       logger.debug(`[GitHub预览] 处理 Markdown 内容，长度: ${text.length}`)
-      
+
       // 读取模板文件
       const template = await fs.readFile(
         path.join(process.cwd(), 'res', 'html', 'githubPreview.html'),
@@ -314,7 +314,6 @@ export const githubPreview = async (req, res) => {
       res.send(text)
       logger.info(`[GitHub预览] 原始内容发送完成: ${req.params[0]}`)
     }
-
   } catch (err) {
     logger.error(`[GitHub预览] 请求失败:`, err)
     logger.error(`[GitHub预览] 错误堆栈:`, err.stack)
