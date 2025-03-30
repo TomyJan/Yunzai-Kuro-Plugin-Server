@@ -1,5 +1,4 @@
 import express from 'express'
-import fs from 'fs'
 import logger from './Tools/logger.js'
 import config from './Tools/config.js'
 import mcGachaData from './Tools/mcGachaData.js'
@@ -10,10 +9,13 @@ import {
   versionCheck,
   kuroBbsTokenCheck,
   kuroTokenCheck,
+  mcGachaTokenCheck,
+  mcGachaDataCheck,
   jsonParseError,
   errorHandler,
   notFoundHandler
 } from './Tools/middleware.js'
+import fetch from 'node-fetch'
 
 logger.info('Yunzai-Kuro-Plugin-Server starting...')
 logger.debug('当前日志级别:', config.logLevel)
@@ -223,6 +225,78 @@ app.post('/api/mc/gacha/get', versionCheck, mcGachaTokenCheck, (req, res) => {
     msg: '获取成功',
     data
   })
+})
+
+// GitHub 仓库代理
+// 请求示例: /repos/TomyJan/Yunzai-Kuro-Plugin/master/README.md
+app.get('/repos/*', async (req, res) => {
+  const path = req.params[0]
+  logger.debug(`[GitHub代理] 收到请求: ${path}`)
+
+  // 检查是否匹配白名单
+  const repo = path.split('/').slice(0, 2).join('/')
+  logger.debug(`[GitHub代理] 检查仓库: ${repo}`)
+  
+  if (!config.repos.whiteList.includes(repo)) {
+    logger.warn(`[GitHub代理] 仓库 ${repo} 不在白名单中`)
+    return res.status(403).json({
+      code: -1,
+      msg: '该仓库未被允许访问'
+    })
+  }
+
+  try {
+    // 构建原始文件 URL
+    const pathParts = path.split('/')
+    const branch = pathParts[2] || 'main'
+    const filePath = pathParts.slice(3).join('/')
+    const url = `${config.repos.githubRawUrl}${repo}/${branch}/${filePath}`
+
+    logger.debug(`[GitHub代理] 请求上游 URL: ${url}`)
+    
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Yunzai-Kuro-Plugin-Server',
+        'Accept': '*/*'
+      }
+    })
+
+    // 如果响应不成功，返回错误
+    if (!response.ok) {
+      logger.warn(`[GitHub代理] 上游响应失败: ${response.status} ${response.statusText}`)
+      return res.status(response.status).json({
+        code: -1,
+        msg: `请求上游失败: ${response.status} ${response.statusText}`
+      })
+    }
+
+    // 获取内容类型和文件名
+    const contentType = response.headers.get('content-type')
+    const fileName = filePath.split('/').pop()
+    logger.debug(`[GitHub代理] 文件名: ${fileName}, 类型: ${contentType}`)
+
+    // 设置响应头
+    res.setHeader('Content-Type', contentType || 'application/octet-stream')
+    res.setHeader('Content-Disposition', `inline; filename="${fileName}"`)
+    res.setHeader('Access-Control-Allow-Origin', '*')
+    res.setHeader('Cache-Control', 'public, max-age=86400')
+
+    // 获取响应内容
+    const buffer = await response.arrayBuffer()
+    logger.debug(`[GitHub代理] 获取到响应内容，大小: ${buffer.byteLength}`)
+
+    // 发送响应
+    res.send(Buffer.from(buffer))
+    logger.info(`[GitHub代理] 响应发送完成: ${path}`)
+
+  } catch (err) {
+    logger.error(`[GitHub代理] 请求失败:`, err)
+    logger.error(`[GitHub代理] 错误堆栈:`, err.stack)
+    res.status(500).json({
+      code: -1,
+      msg: `请求上游失败: ${err.message}`
+    })
+  }
 })
 
 // 错误处理

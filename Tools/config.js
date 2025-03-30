@@ -14,6 +14,13 @@ class ConfigurationManager {
     httpServer: {
       port: 8123,
     },
+    repos: {
+      whiteList: [
+        'TomyJan/Yunzai-Kuro-Plugin',
+        'TomyJan/Yunzai-TomyJan-Plugin',        
+      ],
+      githubRawUrl: 'https://raw.githubusercontent.com/',
+    },
   }
 
   initConfig() {
