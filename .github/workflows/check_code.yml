@@ -24,7 +24,7 @@ jobs:
         with:
           node-version: 14
       - name: Install dependencies
-        run: npm install
+        run: pnpm install
       - name: Extract branch name
         shell: bash
         run: echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
