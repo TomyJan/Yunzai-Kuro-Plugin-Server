@@ -17,7 +17,7 @@ class ConfigurationManager {
     repos: {
       whiteList: [
         'TomyJan/Yunzai-Kuro-Plugin',
-        'TomyJan/Yunzai-TomyJan-Plugin',        
+        'TomyJan/Yunzai-TomyJan-Plugin',
       ],
       githubRawUrl: 'https://raw.githubusercontent.com/',
     },
