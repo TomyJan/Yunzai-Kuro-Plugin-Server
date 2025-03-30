@@ -2,6 +2,9 @@ import logger from './logger.js'
 import kuroBbsTokenData from './kuroBbsTokenData.js'
 import mcGachaData from './mcGachaData.js'
 import config from './config.js'
+import { marked } from 'marked'
+import fs from 'fs/promises'
+import path from 'path'
 
 // 获取客户端IP的中间件 (CDN 兼容)
 export const getClientIp = (req, res, next) => {
@@ -251,6 +254,73 @@ export const githubProxy = async (req, res) => {
     res.status(500).json({
       code: -1,
       msg: `请求上游失败: ${err.message}`,
+    })
+  }
+}
+
+// GitHub 预览中间件
+export const githubPreview = async (req, res) => {
+  const { repo, branch, filePath } = req.githubInfo
+  const url = `${config.repos.githubRawUrl}${repo}/${branch}/${filePath}`
+  const fileExt = filePath.split('.').pop().toLowerCase()
+
+  logger.debug(`[GitHub预览] 请求上游 URL: ${url}`)
+  logger.debug(`[GitHub预览] 文件类型: ${fileExt}`)
+
+  try {
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Yunzai-Kuro-Plugin-Server',
+        Accept: '*/*',
+      },
+    })
+
+    if (!response.ok) {
+      logger.warn(
+        `[GitHub预览] 上游响应失败: ${response.status} ${response.statusText}`
+      )
+      return res.status(response.status).json({
+        code: -1,
+        msg: `请求上游失败: ${response.status} ${response.statusText}`,
+      })
+    }
+
+    const text = await response.text()
+    
+    // 根据文件类型处理预览
+    if (fileExt === 'md') {
+      logger.debug(`[GitHub预览] 处理 Markdown 内容，长度: ${text.length}`)
+      
+      // 读取模板文件
+      const template = await fs.readFile(
+        path.join(process.cwd(), 'res', 'html', 'githubPreview.html'),
+        'utf-8'
+      )
+
+      // 替换占位符
+      const html = template
+        .replace(/\{\{filePath\}\}/g, filePath)
+        .replace(/\{\{repo\}\}/g, repo)
+        .replace('{{content}}', marked(text))
+
+      res.setHeader('Content-Type', 'text/html; charset=utf-8')
+      res.send(html)
+      logger.info(`[GitHub预览] Markdown 预览发送完成: ${req.params[0]}`)
+    } else {
+      // 不支持的格式，原样返回
+      logger.debug(`[GitHub预览] 不支持的文件格式: ${fileExt}，原样返回`)
+      const contentType = response.headers.get('content-type')
+      res.setHeader('Content-Type', contentType || 'text/plain; charset=utf-8')
+      res.send(text)
+      logger.info(`[GitHub预览] 原始内容发送完成: ${req.params[0]}`)
+    }
+
+  } catch (err) {
+    logger.error(`[GitHub预览] 请求失败:`, err)
+    logger.error(`[GitHub预览] 错误堆栈:`, err.stack)
+    res.status(500).json({
+      code: -1,
+      msg: `预览失败: ${err.message}`,
     })
   }
 }

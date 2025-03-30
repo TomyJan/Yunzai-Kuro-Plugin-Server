@@ -16,6 +16,7 @@
     "chalk": "^5.4.1",
     "crypto": "^1.0.1",
     "express": "^4.21.2",
+    "marked": "^15.0.7",
     "node-fetch": "^3.3.2"
   },
   "devDependencies": {

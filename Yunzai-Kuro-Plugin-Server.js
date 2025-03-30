@@ -16,6 +16,7 @@ import {
   notFoundHandler,
   githubRepoCheck,
   githubProxy,
+  githubPreview,
 } from './Tools/middleware.js'
 
 logger.info('Yunzai-Kuro-Plugin-Server starting...')
@@ -263,7 +264,14 @@ app.post('/api/mc/gacha/get', versionCheck, mcGachaTokenCheck, (req, res) => {
 
 // GitHub 仓库代理
 // 请求示例: /repo/raw/TomyJan/Yunzai-Kuro-Plugin/master/README.md
-app.get('/repo/raw/*', githubRepoCheck, githubProxy)
+// 预览示例: /repo/raw/TomyJan/Yunzai-Kuro-Plugin/master/README.md?type=preview
+app.get('/repo/raw/*', githubRepoCheck, (req, res, next) => {
+  if (req.query.type === 'preview') {
+    githubPreview(req, res)
+  } else {
+    githubProxy(req, res)
+  }
+})
 
 // 错误处理
 app.use(errorHandler) // 通用错误处理
