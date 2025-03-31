@@ -185,7 +185,12 @@ export const githubRepoCheck = (req, res, next) => {
   const repo = path.split('/').slice(0, 2).join('/')
   logger.debug(`[GitHub代理] 检查仓库: ${repo}`)
 
-  if (!config.repos.whiteList.includes(repo)) {
+  // 忽略大小写检查白名单并获取正确的仓库名称
+  const whiteListRepo = config.repos.whiteList.find(
+    whiteRepo => whiteRepo.toLowerCase() === repo.toLowerCase()
+  )
+
+  if (!whiteListRepo) {
     logger.warn(`[GitHub代理] 仓库 ${repo} 不在白名单中`)
     return res.status(403).json({
       code: -1,
@@ -193,9 +198,9 @@ export const githubRepoCheck = (req, res, next) => {
     })
   }
 
-  // 将解析后的信息传递给下一个中间件
+  // 将解析后的信息传递给下一个中间件，使用正确大小写的仓库名
   req.githubInfo = {
-    repo,
+    repo: whiteListRepo,  // 使用白名单中的正确大小写
     pathParts: path.split('/'),
     branch: path.split('/')[2] || 'main',
     filePath: path.split('/').slice(3).join('/'),
