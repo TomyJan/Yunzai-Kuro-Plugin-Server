@@ -185,7 +185,7 @@ export const githubRepoCheck = (req, res, next) => {
   const repo = path.split('/').slice(0, 2).join('/')
   logger.debug(`[GitHub代理] 检查仓库: ${repo}`)
 
-  if (!config.repos.whiteList.toLowerCase().includes(repo.toLowerCase())) { // 转换成小写以防某些用户的傻逼浏览器自动转小写访问
+  if (!config.repos.whiteList.includes(repo)) {
     logger.warn(`[GitHub代理] 仓库 ${repo} 不在白名单中`)
     return res.status(403).json({
       code: -1,
