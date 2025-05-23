@@ -25,8 +25,8 @@ importers:
         version: 3.3.2
     devDependencies:
       conventional-changelog:
-        specifier: ^7.0.1
-        version: 7.0.1(conventional-commits-filter@5.0.0)
+        specifier: ^7.0.2
+        version: 7.0.2(conventional-commits-filter@5.0.0)
       conventional-changelog-custom-config:
         specifier: ^0.3.1
         version: 0.3.1
@@ -95,8 +95,8 @@ packages:
     engines: {node: '>=18'}
     hasBin: true
 
-  conventional-changelog@7.0.1:
-    resolution: {integrity: sha512-o+htNF/eQte/I3ykDGiZ6+WgmNLlyMYpL3kSU7Gw9WEfSc2KH8dE7Ywqad9umZ2FDX4R1VU/y3Mw7IcsQ+cjkA==}
+  conventional-changelog@7.0.2:
+    resolution: {integrity: sha512-dz38xbKg2Nzd2zoPY1PXPq7skbN1tdx402OkcirIE44LetmoWODmt4h/6AwtQb6+ZHjbmMfW6Jxt4dyGt5P8cw==}
     engines: {node: '>=18'}
     hasBin: true
 
@@ -503,7 +503,7 @@ snapshots:
       meow: 13.2.0
       semver: 7.7.2
 
-  conventional-changelog@7.0.1(conventional-commits-filter@5.0.0):
+  conventional-changelog@7.0.2(conventional-commits-filter@5.0.0):
     dependencies:
       '@conventional-changelog/git-client': 2.2.0(conventional-commits-filter@5.0.0)(conventional-commits-parser@6.1.0)
       '@types/normalize-package-data': 2.4.4
