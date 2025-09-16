@@ -18,8 +18,8 @@ importers:
         specifier: ^5.1.0
         version: 5.1.0
       marked:
-        specifier: ^16.2.1
-        version: 16.2.1
+        specifier: ^16.3.0
+        version: 16.3.0
       node-fetch:
         specifier: ^3.3.2
         version: 3.3.2
@@ -259,8 +259,8 @@ packages:
   lru-cache@10.4.3:
     resolution: {integrity: sha512-JNAzZcXrCt42VGLuYz0zfAzDfAvJWW6AfYlDBQyDV5DClI2m5sAmK+OIO7s59XfsRsWHp02jAJrRadPRGTt6SQ==}
 
-  marked@16.2.1:
-    resolution: {integrity: sha512-r3UrXED9lMlHF97jJByry90cwrZBBvZmjG1L68oYfuPMW+uDTnuMbyJDymCWwbTE+f+3LhpNDKfpR3a3saFyjA==}
+  marked@16.3.0:
+    resolution: {integrity: sha512-K3UxuKu6l6bmA5FUwYho8CfJBlsUWAooKtdGgMcERSpF7gcBUrCGsLH7wDaaNOzwq18JzSUDyoEb/YsrqMac3w==}
     engines: {node: '>= 20'}
     hasBin: true
 
@@ -709,7 +709,7 @@ snapshots:
 
   lru-cache@10.4.3: {}
 
-  marked@16.2.1: {}
+  marked@16.3.0: {}
 
   math-intrinsics@1.1.0: {}
 
