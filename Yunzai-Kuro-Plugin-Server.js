@@ -33,7 +33,7 @@ app.use(jsonParseError) // 3. JSON 解析错误处理
 app.use(logMiddleware) // 4. 最后是日志记录
 
 // 处理 OPTIONS 请求
-app.options(/.*/, (req, res) => {
+app.options('*', (req, res) => {
   res.status(200).end()
 })
 
@@ -265,7 +265,7 @@ app.post('/api/mc/gacha/get', versionCheck, mcGachaTokenCheck, (req, res) => {
 // GitHub 仓库代理
 // 请求示例: /repo/raw/TomyJan/Yunzai-Kuro-Plugin/master/README.md
 // 预览示例: /repo/raw/TomyJan/Yunzai-Kuro-Plugin/master/README.md?type=preview
-app.get(/^\/repo\/raw\/(.*)/, githubRepoCheck, (req, res, next) => {
+app.get('/repo/raw/*', githubRepoCheck, (req, res, next) => {
   if (req.query.type === 'preview') {
     githubPreview(req, res)
   } else {
@@ -278,45 +278,11 @@ app.use(errorHandler) // 通用错误处理
 app.use(notFoundHandler) // 404 处理
 
 // 启动服务器
-logger.info(`准备在端口 ${config.httpServer.port} 上启动 HTTP 服务器...`)
-const server = app.listen(config.httpServer.port, '0.0.0.0')
-
-// 监听服务器成功启动事件
-server.on('listening', () => {
-  logger.info(`HTTP 服务器启动成功！`)
-  logger.info('========================================')
+const server = app.listen(config.httpServer.port, '0.0.0.0', () => {
+  logger.info(`HTTP 服务器启动成功: 端口 ${config.httpServer.port}`)
+  logger.info('----------------------------------------')
   logger.info('Yunzai-Kuro-Plugin-Server 已启动!')
-  logger.info(`监听地址: 0.0.0.0:${config.httpServer.port}`)
-  logger.info('========================================')
-})
-
-// 监听服务器错误
-server.on('error', (err) => {
-  if (err.code === 'EADDRINUSE') {
-    logger.error('========================================')
-    logger.error('服务器启动失败！')
-    logger.error(`端口 ${config.httpServer.port} 已被占用`)
-    logger.error('请检查是否有其他服务器实例正在运行')
-    logger.error('或修改配置文件中的端口号')
-    logger.error('========================================')
-    process.exit(1)
-  } else if (err.code === 'EACCES') {
-    logger.error('========================================')
-    logger.error('服务器启动失败！')
-    logger.error(`没有权限监听端口 ${config.httpServer.port}`)
-    logger.error('请尝试使用管理员权限运行或更换端口号')
-    logger.error('========================================')
-    process.exit(1)
-  } else {
-    logger.error('========================================')
-    logger.error('服务器启动失败！')
-    logger.error(`错误信息: ${err.message}`)
-    logger.error('========================================')
-    if (err.stack) {
-      logger.error('错误堆栈:', err.stack)
-    }
-    process.exit(1)
-  }
+  logger.info('----------------------------------------')
 })
 
 // 优雅关闭
@@ -339,13 +305,33 @@ process.on('SIGINT', () => {
 
 // 处理未捕获的异常
 process.on('uncaughtException', (err) => {
-  logger.error('未捕获的异常:', err.message)
+  logger.error('未捕获的异常:', err)
 
   // 记录错误堆栈
   if (err.stack) {
     logger.error('错误堆栈:', err.stack)
   }
 
-  // 非致命错误，记录日志后继续运行
-  logger.warn('检测到未捕获的异常，但服务器将尝试继续运行')
+  // 如果是致命错误才关闭服务器
+  if (isFatalError(err)) {
+    logger.error('检测到致命错误，正在关闭服务器...')
+    server.close(() => {
+      logger.info('HTTP 服务器已关闭')
+      process.exit(1)
+    })
+  } else {
+    // 非致命错误，记录日志后继续运行
+    logger.warn('非致命错误，服务器将继续运行')
+  }
 })
+
+// 判断是否为致命错误
+function isFatalError(err) {
+  return (
+    err instanceof TypeError || // 类型错误
+    err instanceof ReferenceError || // 引用错误
+    err.code === 'EADDRINUSE' || // 端口被占用
+    err.code === 'EACCES' || // 权限错误
+    err.code === 'ENOSPC'
+  ) // 磁盘空间不足
+}
