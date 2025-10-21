@@ -31,8 +31,8 @@ class Logger {
       if (err) {
         console.log(
           chalk.yellow(
-            `[${this.getTimeForLog()}] [WARN  ] 写入日志文件时发生错误：${err}`
-          )
+            `[${this.getTimeForLog()}] [WARN  ] 写入日志文件时发生错误：${err}`,
+          ),
         )
       }
     })
@@ -113,7 +113,7 @@ class Logger {
 // 初始化全局日志记录器实例
 const logger = new Logger('debug')
 console.log(
-  chalk.gray(`[${logger.getTimeForLog()}] [LOGGER] Logger initialized!`)
+  chalk.gray(`[${logger.getTimeForLog()}] [LOGGER] Logger initialized!`),
 )
 
 export default logger

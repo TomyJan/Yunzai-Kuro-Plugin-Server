@@ -38,7 +38,7 @@ class kuroBbsTokenDataManager {
           '修改时间:',
           stat.mtimeMs,
           '文件大小:',
-          stat.size
+          stat.size,
         )
       }
     })
@@ -56,12 +56,15 @@ class kuroBbsTokenDataManager {
       let tokenPath = this.dataPath + token + '.json'
       if (!fs.existsSync(tokenPath)) {
         fs.writeFileSync(tokenPath, '{}')
-        setTimeout(() => {
-          if (fs.existsSync(tokenPath)) {
-            fs.unlinkSync(tokenPath)
-            logger.warn('删除超时未使用的 token', token)
-          }
-        }, 3 * 60 * 1000)
+        setTimeout(
+          () => {
+            if (fs.existsSync(tokenPath)) {
+              fs.unlinkSync(tokenPath)
+              logger.warn('删除超时未使用的 token', token)
+            }
+          },
+          3 * 60 * 1000,
+        )
         return token
       }
     } while (true)
@@ -100,7 +103,7 @@ class kuroBbsTokenDataManager {
           '删除 token',
           token,
           '已上传的库街区 token:',
-          JSON.stringify(JSON.parse(rawTokenData))
+          JSON.stringify(JSON.parse(rawTokenData)),
         )
         fs.unlinkSync(tokenPath)
       }

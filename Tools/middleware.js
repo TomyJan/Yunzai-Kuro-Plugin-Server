@@ -29,7 +29,7 @@ export const logMiddleware = (req, res, next) => {
     const duration = Date.now() - startTime
     const level = res.statusCode >= 400 ? 'warn' : 'info'
     logger[level](
-      `请求处理完成: ${req.method} ${req.url} ${res.statusCode} ${duration}ms`
+      `请求处理完成: ${req.method} ${req.url} ${res.statusCode} ${duration}ms`,
     )
   })
 
@@ -59,7 +59,7 @@ export const versionCheck = (req, res, next) => {
 
   if (version !== 1) {
     logger.warn(
-      `客户端 ${req.clientIp} 请求 ${req.url} 不支持的版本号: ${version}`
+      `客户端 ${req.clientIp} 请求 ${req.url} 不支持的版本号: ${version}`,
     )
     return res.json({
       code: -1,
@@ -91,11 +91,20 @@ export const kuroTokenCheck = (req, res, next) => {
   logger.debug(`库街区 kuroToken 验证: ${req.url}`)
   const { kuroToken } = req.body
 
-  if (!kuroToken || Object.keys(kuroToken).length < 4 || !kuroToken?.code || !kuroToken?.data || !kuroToken?.data?.userId || !kuroToken?.data?.token || !kuroToken?.msg || !kuroToken?.success) {
+  if (
+    !kuroToken ||
+    Object.keys(kuroToken).length < 4 ||
+    !kuroToken?.code ||
+    !kuroToken?.data ||
+    !kuroToken?.data?.userId ||
+    !kuroToken?.data?.token ||
+    !kuroToken?.msg ||
+    !kuroToken?.success
+  ) {
     logger.warn(
       `客户端 ${req.clientIp} 请求 ${
         req.url
-      } 不完整的 kuroToken: ${JSON.stringify(kuroToken)}`
+      } 不完整的 kuroToken: ${JSON.stringify(kuroToken)}`,
     )
     return res.json({
       code: -1,
@@ -110,7 +119,7 @@ export const kuroTokenCheck = (req, res, next) => {
 export const jsonParseError = (err, req, res, next) => {
   if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
     logger.warn(
-      `客户端 ${req.clientIp} 请求 ${req.url} 无效的请求体: ${err.body}`
+      `客户端 ${req.clientIp} 请求 ${req.url} 无效的请求体: ${err.body}`,
     )
     return res.status(400).json({
       code: -1,
@@ -155,7 +164,7 @@ export const mcGachaDataCheck = (req, res, next) => {
 
   if (!playerId || !/^\d{9}$/.test(playerId)) {
     logger.warn(
-      `客户端 ${req.clientIp} 请求 ${req.url} 无效的 UID: ${playerId}`
+      `客户端 ${req.clientIp} 请求 ${req.url} 无效的 UID: ${playerId}`,
     )
     return res.json({
       code: -1,
@@ -167,7 +176,7 @@ export const mcGachaDataCheck = (req, res, next) => {
     logger.warn(
       `客户端 ${req.clientIp} 请求 ${
         req.url
-      } 不完整的抽卡记录: ${JSON.stringify(gachaData)}`
+      } 不完整的抽卡记录: ${JSON.stringify(gachaData)}`,
     )
     return res.json({
       code: -1,
@@ -187,7 +196,7 @@ export const githubRepoCheck = (req, res, next) => {
 
   // 忽略大小写检查白名单并获取正确的仓库名称
   const whiteListRepo = config.repos.whiteList.find(
-    whiteRepo => whiteRepo.toLowerCase() === repo.toLowerCase()
+    (whiteRepo) => whiteRepo.toLowerCase() === repo.toLowerCase(),
   )
 
   if (!whiteListRepo) {
@@ -200,7 +209,7 @@ export const githubRepoCheck = (req, res, next) => {
 
   // 将解析后的信息传递给下一个中间件，使用正确大小写的仓库名
   req.githubInfo = {
-    repo: whiteListRepo,  // 使用白名单中的正确大小写
+    repo: whiteListRepo, // 使用白名单中的正确大小写
     pathParts: path.split('/'),
     branch: path.split('/')[2] || 'main',
     filePath: path.split('/').slice(3).join('/'),
@@ -227,7 +236,7 @@ export const githubProxy = async (req, res) => {
     // 如果响应不成功，返回错误
     if (!response.ok) {
       logger.warn(
-        `[GitHub代理] 上游响应失败: ${response.status} ${response.statusText}`
+        `[GitHub代理] 上游响应失败: ${response.status} ${response.statusText}`,
       )
       return res.status(response.status).json({
         code: -1,
@@ -252,7 +261,9 @@ export const githubProxy = async (req, res) => {
 
     // 发送响应
     res.send(Buffer.from(buffer))
-    logger.info(`[GitHub代理] 响应发送完成: ${req.params.path || req.params[0]}`)
+    logger.info(
+      `[GitHub代理] 响应发送完成: ${req.params.path || req.params[0]}`,
+    )
   } catch (err) {
     logger.error(`[GitHub代理] 请求失败:`, err)
     logger.error(`[GitHub代理] 错误堆栈:`, err.stack)
@@ -282,7 +293,7 @@ export const githubPreview = async (req, res) => {
 
     if (!response.ok) {
       logger.warn(
-        `[GitHub预览] 上游响应失败: ${response.status} ${response.statusText}`
+        `[GitHub预览] 上游响应失败: ${response.status} ${response.statusText}`,
       )
       return res.status(response.status).json({
         code: -1,
@@ -299,7 +310,7 @@ export const githubPreview = async (req, res) => {
       // 读取模板文件
       const template = await fs.readFile(
         path.join(process.cwd(), 'res', 'html', 'githubPreview.html'),
-        'utf-8'
+        'utf-8',
       )
 
       // 替换占位符
@@ -310,14 +321,18 @@ export const githubPreview = async (req, res) => {
 
       res.setHeader('Content-Type', 'text/html; charset=utf-8')
       res.send(html)
-      logger.info(`[GitHub预览] Markdown 预览发送完成: ${req.params.path || req.params[0]}`)
+      logger.info(
+        `[GitHub预览] Markdown 预览发送完成: ${req.params.path || req.params[0]}`,
+      )
     } else {
       // 不支持的格式，原样返回
       logger.debug(`[GitHub预览] 不支持的文件格式: ${fileExt}，原样返回`)
       const contentType = response.headers.get('content-type')
       res.setHeader('Content-Type', contentType || 'text/plain; charset=utf-8')
       res.send(text)
-      logger.info(`[GitHub预览] 原始内容发送完成: ${req.params.path || req.params[0]}`)
+      logger.info(
+        `[GitHub预览] 原始内容发送完成: ${req.params.path || req.params[0]}`,
+      )
     }
   } catch (err) {
     logger.error(`[GitHub预览] 请求失败:`, err)

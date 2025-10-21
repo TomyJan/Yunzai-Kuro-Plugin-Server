@@ -39,7 +39,7 @@
         var r = (Math.random() * 16) | 0
         var v = c === 'x' ? r : (r & 0x3) | 0x8
         return v.toString(16)
-      }
+      },
     )
   }
 
@@ -289,7 +289,7 @@
             cb(false)
           }
         },
-        config.timeout
+        config.timeout,
       )
     }
     tryRequest(0)
@@ -328,8 +328,8 @@
         lang: config.language
           ? config.language
           : navigator.appName === 'Netscape'
-          ? navigator.language.toLowerCase()
-          : navigator.userLanguage.toLowerCase(),
+            ? navigator.language.toLowerCase()
+            : navigator.userLanguage.toLowerCase(),
       },
       function (err) {
         // 网络问题接口没有返回，直接使用本地验证码，走宕机模式
@@ -343,7 +343,7 @@
           callback(config._get_fallback_config())
         }
       },
-      handleCb
+      handleCb,
     )
   }
 
@@ -360,7 +360,7 @@
         exception_url: url,
         error_code: config.error_code,
       },
-      function (err) {}
+      function (err) {},
     )
   }
 
@@ -460,7 +460,7 @@
                   },
                 })
               }
-            }
+            },
           )
         }
 
@@ -494,7 +494,7 @@
               callbacks[type] = []
               status[type] = 'init'
             }
-          }
+          },
         )
       } else if (s === 'loaded') {
         // 判断gct是否需要重新加载
@@ -517,7 +517,7 @@
                   },
                 })
               }
-            }
+            },
           )
         }
         return init()

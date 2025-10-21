@@ -111,7 +111,7 @@ app.post(
       code: 0,
       msg: 'Token 有效',
     })
-  }
+  },
 )
 
 // API: 前端: 上传库街区 Token
@@ -127,7 +127,7 @@ app.post(
     const saveRet = kuroBbsTokenData.saveTokenData(token, req.body.kuroToken)
     if (saveRet !== null) {
       logger.error(
-        `保存库街区 Token 失败: ${req.clientIp} token=${token} error=${saveRet}`
+        `保存库街区 Token 失败: ${req.clientIp} token=${token} error=${saveRet}`,
       )
       return res.json({
         code: -1,
@@ -140,7 +140,7 @@ app.post(
       code: 0,
       msg: '保存成功',
     })
-  }
+  },
 )
 
 // API: Bot: 获取库街区 Token
@@ -166,7 +166,7 @@ app.post(
       msg: '获取成功',
       data,
     })
-  }
+  },
 )
 
 // (已弃用) API: Bot: 生成鸣潮抽卡记录上传的密钥
@@ -202,7 +202,7 @@ app.post(
       code: 0,
       msg: 'token 有效',
     })
-  }
+  },
 )
 
 // (已弃用) API: 前端: 上传鸣潮抽卡记录
@@ -214,7 +214,7 @@ app.post(
   (req, res) => {
     const { token, playerId, gachaData } = req.body
     logger.debug(
-      `上传鸣潮抽卡记录: ${req.clientIp} token=${token} playerId=${playerId}`
+      `上传鸣潮抽卡记录: ${req.clientIp} token=${token} playerId=${playerId}`,
     )
 
     const saveRet = mcGachaData.saveGachaData(token, {
@@ -224,7 +224,7 @@ app.post(
     })
     if (saveRet !== null) {
       logger.error(
-        `保存抽卡记录失败: ${req.clientIp} token=${token} error=${saveRet}`
+        `保存抽卡记录失败: ${req.clientIp} token=${token} error=${saveRet}`,
       )
       return res.json({
         code: -1,
@@ -237,7 +237,7 @@ app.post(
       code: 0,
       msg: '保存成功',
     })
-  }
+  },
 )
 
 // (已弃用) API: Bot: 获取鸣潮抽卡记录

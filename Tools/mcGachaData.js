@@ -72,7 +72,7 @@ class mcGachaDataManager {
           '删除 token',
           token,
           '已上传的抽卡记录:',
-          JSON.stringify(JSON.parse(rawGachaData))
+          JSON.stringify(JSON.parse(rawGachaData)),
         )
         fs.unlinkSync(tokenPath)
       }
