@@ -1,6 +1,6 @@
 {
   "name": "yunzai-kuro-plugin-server",
-  "version": "0.0.1-dev",
+  "version": "0.1.0-dev",
   "author": "TomyJan",
   "description": "A auxiliary service server program of Yunzai-Kuro-Plugin.",
   "type": "module",
@@ -20,6 +20,7 @@
   },
   "devDependencies": {
     "conventional-changelog": "^7.1.1",
+    "conventional-changelog-angular": "^8.1.0",
     "conventional-changelog-custom-config": "^0.3.1",
     "prettier": "^3.6.2"
   },
