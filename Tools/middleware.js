@@ -91,7 +91,7 @@ export const kuroTokenCheck = (req, res, next) => {
   logger.debug(`库街区 kuroToken 验证: ${req.url}`)
   const { kuroToken } = req.body
 
-  if (!kuroToken || Object.keys(kuroToken).length !== 4) {
+  if (!kuroToken || Object.keys(kuroToken).length < 4 || !kuroToken?.code || !kuroToken?.data || !kuroToken?.data?.userId || !kuroToken?.data?.token || !kuroToken?.msg || !kuroToken?.success) {
     logger.warn(
       `客户端 ${req.clientIp} 请求 ${
         req.url
