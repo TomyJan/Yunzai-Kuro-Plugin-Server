@@ -9,6 +9,7 @@
     "singleQuote": true
   },
   "scripts": {
+    "start": "node Yunzai-Kuro-Plugin-Server.js",
     "format": "prettier --write \"**/*.js\"",
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s -r 0"
   },

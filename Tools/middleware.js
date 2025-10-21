@@ -181,7 +181,7 @@ export const mcGachaDataCheck = (req, res, next) => {
 
 // GitHub 仓库白名单验证中间件
 export const githubRepoCheck = (req, res, next) => {
-  const path = req.params[0]
+  const path = req.params[0] || req.params.path || ''
   const repo = path.split('/').slice(0, 2).join('/')
   logger.debug(`[GitHub代理] 检查仓库: ${repo}`)
 
@@ -252,7 +252,7 @@ export const githubProxy = async (req, res) => {
 
     // 发送响应
     res.send(Buffer.from(buffer))
-    logger.info(`[GitHub代理] 响应发送完成: ${req.params[0]}`)
+    logger.info(`[GitHub代理] 响应发送完成: ${req.params.path || req.params[0]}`)
   } catch (err) {
     logger.error(`[GitHub代理] 请求失败:`, err)
     logger.error(`[GitHub代理] 错误堆栈:`, err.stack)
@@ -310,14 +310,14 @@ export const githubPreview = async (req, res) => {
 
       res.setHeader('Content-Type', 'text/html; charset=utf-8')
       res.send(html)
-      logger.info(`[GitHub预览] Markdown 预览发送完成: ${req.params[0]}`)
+      logger.info(`[GitHub预览] Markdown 预览发送完成: ${req.params.path || req.params[0]}`)
     } else {
       // 不支持的格式，原样返回
       logger.debug(`[GitHub预览] 不支持的文件格式: ${fileExt}，原样返回`)
       const contentType = response.headers.get('content-type')
       res.setHeader('Content-Type', contentType || 'text/plain; charset=utf-8')
       res.send(text)
-      logger.info(`[GitHub预览] 原始内容发送完成: ${req.params[0]}`)
+      logger.info(`[GitHub预览] 原始内容发送完成: ${req.params.path || req.params[0]}`)
     }
   } catch (err) {
     logger.error(`[GitHub预览] 请求失败:`, err)
