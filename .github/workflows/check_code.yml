@@ -24,7 +24,7 @@ jobs:
         with:
           node-version: latest
       - name: Install pnpm
-        uses: pnpm/action-setup@v5
+        uses: pnpm/action-setup@v6
       - name: Install dependencies
         run: pnpm install
       - name: Extract branch name
